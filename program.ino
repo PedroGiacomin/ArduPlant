@@ -11,15 +11,17 @@
 // Objeto do Real Time Clock (RTC)
 virtuabotixRTC myRTC(CLK, DAT, RST);
 
-//Variaveis que guardam o momento de ligar a bomba
-int hora_acionamento = 23;
-int min_acionamento = 34;
+//-----VARIAVEIS DE DADOS-----//
+//Guardam o momento de ligar a bomba
+int hora_acionamento = 19;
+int min_acionamento = 25;
 
+//-----VARIAVEIS DE CONTROLE-----// 
 //Guarda o estado do botao
 bool pressionado = 0;
 
-//Variavel de controle pra bomba nao ligar mais de uma vez no mesmo minuto
-bool jaligou = 0;
+//Guarda simplesmente se a bomba ligou 
+bool bomba_ja_ligou = 0;
 
 void setup()  {
   //MONITOR
@@ -34,7 +36,7 @@ void setup()  {
   //CLOCK
   //SETUP INICIAL: Carrega data atual -> Comenta a linha abaixo -> Carrega de novo
   // segundos, minutos, horas, dia da semana, dia do mês, mês, ano
-  //myRTC.setDS1302Time(0, 12, 20, 5, 12, 8, 2021);
+  //myRTC.setDS1302Time(0, 23, 19, 3, 24, 8, 2021);
 }
 
 /*
@@ -45,42 +47,43 @@ void setup()  {
 */
 
 void loop()  {
-  // Funcao da biblioteca necessaria ao bom funcionamento do codigo
+  //Funcao necessaria do relogio
   myRTC.updateTime();
-  // Serve para checar o output do clock
-  printClock();
+  printClock(); //no monitor serial
+  //Serial.print("Pressionado = ");
+  //Serial.print(pressionado);
+  //Serial.print("\n");
   digitalWrite(RELE, HIGH);
 
   //Liga o rele se o botao for pressionado 
   pressionado = digitalRead(BOTAO);
-  //Aciona o RELE por 10 s no pressionar do botao 
+  //Aciona o RELE por 30 s no pressionar do botao 
   if(pressionado == 1){
-    digitalWrite(RELE, LOW);
-    //Nao sei pq mas o rele esta invertido, liga no LOW
-    delay(30000);
-    digitalWrite(RELE, HIGH);
+    ligaRele();
   }
-
   //Se nao estiver pressionado
   else{
-    //Liga o rele por 5 s se chegar a hora
-    if(myRTC.hours == hora_acionamento && myRTC.minutes == min_acionamento && jaligou == 0){ 
-      digitalWrite(RELE, LOW);
-        jaligou = 1;
-        unsigned agora = millis();
-        while(millis() < agora + 30000) {
-          // Pausa de 5 segundos. Nada a fazer
-        }
-      digitalWrite(RELE, HIGH);
+     //Liga o rele se chegar a hora
+    if(myRTC.hours == hora_acionamento && myRTC.minutes == min_acionamento && bomba_ja_ligou == 0){ 
+      ligaRele();
+      bomba_ja_ligou = 1;
     }
     
     if(myRTC.minutes != min_acionamento)
-      jaligou = 0;
+      bomba_ja_ligou = 0;
   }
 
 }
 
-//Funcoes
+//-----FUNCOES-----//
+
+void ligaRele(){
+//Aciona o RELE por 30 s 
+    digitalWrite(RELE, LOW);
+    //Nao sei pq mas o rele esta invertido, liga no LOW
+    delay(30000);
+    digitalWrite(RELE, HIGH);
+}
 
 void printClock(){
    //Printa a data e hora do clock no monitor serial 
